@@ -1,4 +1,105 @@
+require 'securerandom'
+
 class StringToHtml
+  @content
+  @rules
+
+  def initialize(textContent: '', rules: {})
+    @content = textContent
+    @rules = rules
+  end
+
+  def parseText
+    #split text to into an array of separate paragraphs
+    plainText = @content.split("\n\n").to_a
+    # add html paragraphing
+    paragraphedText = plainText.map { |i| "<p>"+i+"</p><br>"}
+    #add highlighting
+    paragraphedTextasArray = paragraphedText.join('').split(" ").to_a
+    highlightedText = checkAgainstRules(paragraphedTextasArray)
+  end
+
+  def checkAgainstRules(textArray)
+    #copy of array to be modified
+    modifiedTextArray = textArray
+    #for each rule, find corresponding item in array and apply styles formating with random hexcolor generator function
+    @rules.each do |n|
+      #-1 to account for 0 based counting done when using arrays
+      @start   =  n[:start] - 1
+      @ends    =  n[:end] - 1
+      @comment =  n[:comment]
+      modifiedTextArray[@start] = "<div class='tooltip' style='background:#{genHex};'>"+textArray[@start]
+      modifiedTextArray[@ends] = textArray[@ends]+"<div class='tooltiptext'>#{@comment}</div></div>"
+    end
+    finalText = modifiedTextArray.join(" ")
+    output(finalText)
+  end
+
+  def genHex
+    # SecureRandom.hex(3) no opacity hence won't show up properly on overlap
+    randomColor = 'rgba('+"#{rand(0...255)},#{rand(0...255)},#{rand(0...255)},0.#{rand(5...9)}"+')'
+    randomColor
+  end
+  def output(formattedText)
+    htmloutput =
+        "<!DOCTYPE html>
+      <html>
+      <head>
+          <meta charset='utf-8'>
+          <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+          <title>
+              Ruby output test file
+          </title>
+      </head>
+      <body>
+        " + formattedText + "
+      </body>
+      <style type='text/css' media='screen'>
+      .body{
+        padding-top: 50px;
+      }
+      .tooltip {
+        position: relative;
+          display: inline;
+      }
+
+      .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px 0;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 0%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #555 transparent transparent transparent;
+      }
+
+      .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+      }
+      </style>
+    </html>
+    "
+    puts htmloutput
+  end
 
 
 end
@@ -27,7 +128,8 @@ highlights = [{
                   comment: 'Baz'
               }]
 
-
+runit = StringToHtml.new(textContent: content, rules: highlights)
+runit.parseText()
 
 
 #TODO code test link https://gist.github.com/autonomous/56630836b491734211c440f16bcb53a9
