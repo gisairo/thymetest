@@ -1,4 +1,45 @@
+require 'securerandom'
+
 class StringToHtml
+  @content
+  @rules
+
+  def initialize(textContent: '', rules: {})
+    @content = textContent
+    @rules = rules
+  end
+
+  def parseText
+    #split text to into an array of separate paragraphs
+    plainText = @content.split("\n\n").to_a
+    # add html paragraphing
+    paragraphedText = plainText.map { |i| "<p>"+i+"</p><br>"}
+    #add highlighting
+    paragraphedTextasArray = paragraphedText.join('').split(" ").to_a
+    highlightedText = checkAgainstRules(paragraphedTextasArray)
+  end
+
+  def checkAgainstRules(textArray)
+    #copy of array to be modified
+    modifiedTextArray = textArray
+    #for each rule, find corresponding item in array and apply styles formating with random hexcolor generator function
+    @rules.each do |n|
+      #-1 to account for 0 based counting done when using arrays
+      @start   =  n[:start] - 1
+      @ends    =  n[:end] - 1
+      @comment =  n[:comment]
+      modifiedTextArray[@start] = "<div class='tooltip' style='background:#{genHex};'>"+textArray[@start]
+      modifiedTextArray[@ends] = textArray[@ends]+"<div class='tooltiptext'>#{@comment}</div></div>"
+    end
+    finalText = modifiedTextArray.join(" ")
+  end
+
+  def genHex
+    # SecureRandom.hex(3) no opacity hence won't show up properly on overlap
+    randomColor = 'rgba('+"#{rand(0...255)},#{rand(0...255)},#{rand(0...255)},0.#{rand(5...9)}"+')'
+    randomColor
+  end
+
 
 
 end
@@ -27,7 +68,8 @@ highlights = [{
                   comment: 'Baz'
               }]
 
-
+runit = StringToHtml.new(textContent: content, rules: highlights)
+runit.parseText()
 
 
 #TODO code test link https://gist.github.com/autonomous/56630836b491734211c440f16bcb53a9
